@@ -1,6 +1,5 @@
 #ifndef NODEPP_LOOP
 #define NODEPP_LOOP
-#include <mutex>
 
 namespace LOOP_NODEPP {
     class NODE { public: function_t<int> data; 
@@ -11,8 +10,6 @@ namespace LOOP_NODEPP {
 
 namespace process {
 
-    std::mutex mut; int _act_= 0; 
-
     namespace loop {
 
         LOOP_NODEPP::NODE* queue = nullptr;
@@ -21,7 +18,6 @@ namespace process {
 
         template< class T, class... V >
         void add( T _func, V... arg ){ 
-            std::lock_guard<std::mutex> lock(mut);
 
             auto _func_ = [=](){ return _func( arg... ); };
             
@@ -65,7 +61,6 @@ namespace process {
 
         template< class T, class... V >
         void add( T _func, V... arg ){ 
-            std::lock_guard<std::mutex> lock(mut);
 
             auto _func_ = [=](){ return _func( arg... ); };
             
@@ -102,4 +97,5 @@ namespace process {
     }
 
 }
+
 #endif

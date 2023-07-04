@@ -1,9 +1,6 @@
 #ifndef NODEPP_PTR
 #define NODEPP_PTR
 
-#include <cstddef>
-#include <atomic>
-
 template<class T>
 class ptr_t { public:
 
@@ -13,13 +10,13 @@ class ptr_t { public:
 
     ptr_t(T* value) {
         if (value == nullptr){ return; }
-        count_ = new std::atomic<uint>(1);
+        count_ = new uint(1);
         value_ = value;
     }
 
     ptr_t(const ptr_t& other){ copy(other); }
 
-    ptr_t(ptr_t&& other) noexcept { move(std::move(other)); }
+    ptr_t(ptr_t&& other) noexcept { copy(other); }
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
@@ -43,7 +40,7 @@ class ptr_t { public:
     }
 
     ptr_t& operator=(ptr_t&& other) noexcept {
-        if( this->value_ != &other ){ reset(); move(std::move(other)); }
+        if( this->value_ != &other ){ reset(); copy(other); }
         return *this;
     }
 
@@ -72,8 +69,8 @@ class ptr_t { public:
     T* get() const noexcept { return value_; }
 
 protected:
-    std::atomic<uint>* count_ = nullptr;
-                           T* value_ = nullptr;
+    uint* count_ = nullptr;
+       T* value_ = nullptr;
 
     void copy(const ptr_t& other) {
         if (other.count_ == nullptr){ return; }

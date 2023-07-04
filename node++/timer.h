@@ -7,17 +7,17 @@ namespace timer {
     int* timeout( V func, uint time, T... args ){ int* out = new int(1); 
         process::loop::add([=](){ 
             static uint stamp = process::now() + time;
-            $Start
+            _Start
             
             while( true ){
-                     if( out == nullptr ) $Goto(3);
-                else if(*out == 0 )       $Goto(2);
-               if( process::now() >= stamp ) break;   $Yield(1); 
-            }      func(args...); $Goto(2);
+                     if( out == nullptr ) _Goto(3);
+                else if(*out == 0 )       _Goto(2);
+               if( process::now() >= stamp ) break;   _Yield(1); 
+            }      func(args...); _Goto(2);
 
-            $Yield(4); stamp = process::now() + time; $Goto(0);
-            $Yield(2); delete out; $Yield(3); $Set(4); 
-            $End
+            _Yield(4); stamp = process::now() + time; _Goto(0);
+            _Yield(2); delete out; _Yield(3); _Set(4); 
+            _End
         }); return out;
     };
 
@@ -29,16 +29,16 @@ namespace timer {
     int* interval( V func, uint time, T... args ){ int* out = new int(1); 
         process::loop::add([=]( int* out ){ 
             static uint stamp = process::now() + time;
-            $Start
+            _Start
 
             while( true ){
-                     if( out == nullptr ) $Goto(3);
-                else if(*out == 0 )       $Goto(2);
-                if( process::now() >= stamp ) break; $Yield(1);
-            }       stamp = process::now() + time; func(args...); $Goto(1); 
+                     if( out == nullptr ) _Goto(3);
+                else if(*out == 0 )       _Goto(2);
+                if( process::now() >= stamp ) break; _Yield(1);
+            }       stamp = process::now() + time; func(args...); _Goto(1); 
 
-            $Yield(2); delete out; $Yield(3); $Set(0);
-            $End
+            _Yield(2); delete out; _Yield(3); _Set(0);
+            _End
         }, out ); return out;
     };
 
@@ -54,22 +54,22 @@ namespace timer {
         process::loop::add([=]( int* out ){
             static T   resolved;
             static V   rejected;
-            $Start
+            _Start
             
-            $Yield(1); func(
-                [&]( T data ){ if( $Get > 2 ){ return; } resolved = data; $Set(3); },
-                [&]( V data ){ if( $Get > 2 ){ return; } rejected = data; $Set(4); }
-            );  if( $Get < 2 ){ $Goto(2); }
+            _Yield(1); func(
+                [&]( T data ){ if( _Get > 2 ){ return; } resolved = data; _Set(3); },
+                [&]( V data ){ if( _Get > 2 ){ return; } rejected = data; _Set(4); }
+            );  if( _Get < 2 ){ _Goto(2); }
 
             while( true ){
-                     if( out == nullptr )     $Goto(6);
-                else if(*out == 0 )           $Goto(5);
-                if( $Get != 2 ) break;        $Yield(2);
-            }                                 $Goto($Get);
-            $Yield(3); res( resolved );       $Goto(5);
-            $Yield(4); rej( rejected );       $Goto(5);
-            $Yield(5); delete out; $Yield(6); $Set(0);
-            $End
+                     if( out == nullptr )     _Goto(6);
+                else if(*out == 0 )           _Goto(5);
+                if( _Get != 2 ) break;        _Yield(2);
+            }                                 _Goto(_Get);
+            _Yield(3); res( resolved );       _Goto(5);
+            _Yield(4); rej( rejected );       _Goto(5);
+            _Yield(5); delete out; _Yield(6); _Set(0);
+            _End
         }, out ); return out;
 
     }
@@ -80,20 +80,20 @@ namespace timer {
     ){  int* out = new int(1);
         process::loop::add([=]( int* out ){
             static T   resolved;
-            $Start
+            _Start
             
-            $Yield(1); func(
-                [&]( T data ){ if( $Get > 2 ){ return; } resolved = data; $Set(3); }
-            );  if( $Get < 2 ){ $Goto(2); }
+            _Yield(1); func(
+                [&]( T data ){ if( _Get > 2 ){ return; } resolved = data; _Set(3); }
+            );  if( _Get < 2 ){ _Goto(2); }
 
             while( true ){
-                     if( out == nullptr )     $Goto(6);
-                else if(*out == 0 )           $Goto(5);
-                if( $Get != 2 ) break;        $Yield(2);
-            }                                 $Goto($Get);
-            $Yield(3); res( resolved );       $Goto(5);
-            $Yield(5); delete out; $Yield(6); $Set(0);
-            $End
+                     if( out == nullptr )     _Goto(6);
+                else if(*out == 0 )           _Goto(5);
+                if( _Get != 2 ) break;        _Yield(2);
+            }                                 _Goto(_Get);
+            _Yield(3); res( resolved );       _Goto(5);
+            _Yield(5); delete out; _Yield(6); _Set(0);
+            _End
         }, out); return out;
 
     }

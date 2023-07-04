@@ -3,21 +3,7 @@
 
 namespace console {
 
-#ifndef ARDUINO
-
-    template< class... T >
-    void start( T... args ){  }
-
-    template< class... T >
-    int scan( T... args ){ return scanf( args... ); }
-
-    template< class V, class... T >
-    int print( V argc, T... args ){ return printf( argc, args... ); }
-
-#else
-
-    template< class... T >
-    void start( T... args ){ Serial.begin(args...); }
+    void clear(){ Serial.write("\033c"); }
 
     int scan( const char* format, ... ) {
       char buffer[256]; int count = 0;
@@ -63,21 +49,11 @@ namespace console {
       return i;
     }
 
-#endif
+    template< class... T >
+    int log( T... args ){ return print( args... ); }
 
-    void clear(){ print("\033c"); }
-
-    template< class T >
-    int log( T args ){ return print("%s\n", std::to_string( args ).c_str() ); }
-
-    template< class V, class... T >
-    int log( V argc, T... args ){ 
-        if(!regex::test(std::to_string(argc),"\\$\\{\\d+\\}","i") ){
-            iterate([&]( auto arg ){ print("%s ",std::to_string(arg).c_str()); }, argc, args... );
-        } else {
-            print("%s", format( argc, args... ).c_str() );
-        }
-    print("\n"); return 1; }
+    template< class... T >
+    void start( T... args ){ Serial.begin(args...); }
 
     template< class... T >
     int done( T... input ){ print("\033[0;32m\033[1mDONE: \033[0m\033[0m"); return log(input...); }
@@ -98,11 +74,11 @@ namespace console {
 
 class debug_t { 
     
-    protected: string_t message; public:
-   ~debug_t(){ console::log( "${0} closed", message ); }
+    protected: String message; public:
+   ~debug_t(){ console::log( "%s closed", message.c_str() ); }
 
-    debug_t( string_t msg ){ console::log( "${0} open", msg ); message = msg; }
-    void log( string_t msg ){ console::log( "--  ${0}", msg ); }
+    debug_t( String msg ){ console::log( "%s open", msg.c_str() ); message = msg; }
+    void log( String msg ){ console::log( "--  %s", msg.c_str() ); }
 
     debug_t( const debug_t& o) = delete;
     debug_t& operator=( const debug_t& o ) = delete;
@@ -111,4 +87,5 @@ class debug_t {
     debug_t& operator=( const debug_t&& o ) = delete;
 
 };
+
 #endif
