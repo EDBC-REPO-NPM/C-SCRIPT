@@ -35,14 +35,14 @@ int $Ready() {
 
 ## Examples
 
-- [fetch in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/fetch.cpp)
-- [Hello World](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/HelloWorld.cpp)
-- [Streams in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/Streams.cpp)
-- [Promises in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/Promises.cpp)
-- [Regular Expressions in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/RegExp.cpp)
-- [setInterval and setTimeout in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/Timer.cpp)
-- [Simple HTTP Server in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/SimpleHTTPServer.cpp)
-- [Advanced HTTP Server in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/main/examples/AdvancedHTTPServer.cpp)
+- [Hello World](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/HelloWorld.cpp)
+- [fetch in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/fetch.cpp)
+- [Streams in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/Streams.cpp)
+- [Promises in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/Promises.cpp)
+- [Regular Expressions in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/RegExp.cpp)
+- [setInterval and setTimeout in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/Timer.cpp)
+- [Simple HTTP Server in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/SimpleHTTPServer.cpp)
+- [Advanced HTTP Server in Node++](https://github.com/EDBC-REPO-NPM/NODEPP/blob/Node%2B%2B/examples/AdvancedHTTPServer.cpp)
 
 ## Contribution
 
