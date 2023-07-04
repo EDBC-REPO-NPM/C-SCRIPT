@@ -1,1 +1,2 @@
-g++ -std=c++14 main.cpp -o main -pthread -fconcepts-ts -fpermissive -w ; ./main
+#!/bin/bash
+time g++ -o main http.cpp -pthread -lcrypto -lssl -Wall ; ./main
