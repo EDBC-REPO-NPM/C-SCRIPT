@@ -25,11 +25,11 @@ namespace console {
 
     template< class... T >
     int print( const char* format, T... args ){
-      return string::format( format, args... ).size();
+      return Serial.write( (char*) string::format( format, args... ) );
     }
 
     template< class... T >
-    int scan( const char* format, T... args ) { while( !Serial.available() ){}
+    string_t scan( const char* format, T... args ) { while( !Serial.available() ){}
       return string::scan( Serial.read(), format, args... );
     }
 

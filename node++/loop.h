@@ -1,6 +1,5 @@
 #ifndef NODEPP_LOOP
 #define NODEPP_LOOP
-#include "queue.h"
 
 namespace process {
 
@@ -22,6 +21,8 @@ namespace process {
             else if( result <  0 ) queue.erase( queue.get() );
         }
 
+        void clear(){ queue.clear(); }
+
     }
 
     namespace poll {
@@ -41,6 +42,8 @@ namespace process {
                  if( result == 0 ) queue.next();
             else if( result <  0 ) queue.erase( queue.get() );
         }
+
+        void clear(){ queue.clear(); }
 
     }
 
