@@ -1,29 +1,61 @@
 #ifndef NODEPP_EVENT
 #define NODEPP_EVENT
+ 
+namespace EVENT_NODEPP {
+
+    uint HASH(  ) {
+        int x = 32; uint data = 0; while( x --> 0 ){
+            data = ( data | rand() % 2 ) << 1;
+        }   return data;
+    }
+
+    template< class... T >
+    struct ID {
+        function_t<void,T...> cb;
+        uint id;
+    };
+
+}
 
 template< class... A > 
 class event_t { 
 
+    using ev = queue_t<EVENT_NODEPP::ID<A...>>;
+
     protected:
-    using _ev = function_t<void,A...>;
-    ptr_t<_ev> every_ev, once_ev;
+    ev        once_queue;
+    ev        every_queue;
 
     public:
     void emit( A... args ){
-        if( every_ev != nullptr )(*every_ev)(args...); 
-        if( once_ev != nullptr )(*once_ev)(args...);
-            once_ev.reset();
+        every_queue.map([]( EVENT_NODEPP::ID<A...> arg ){ arg.cb(); });
+        once_queue.map([]( EVENT_NODEPP::ID<A...> arg ){ arg.cb(); });
+        if( !once_queue.empty() ) once_queue.clear();
     }
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    void once( _ev func ){ once_ev = new _ev(func); }
-    void on( _ev func ){ every_ev = new _ev(func); }
-    void off(){ every_ev.reset(); once_ev.reset(); }
+    void off( uint _hash ){
+        uint index_A = every_queue.index_of([=]( EVENT_NODEPP::ID<A...> data ){ return data.id == _hash; });
+        uint index_B = once_queue.index_of([=]( EVENT_NODEPP::ID<A...> data ){ return data.id == _hash; });
+        every_queue.erase( every_queue.get( index_A ) );
+        once_queue.erase( once_queue.get( index_B ) );
+    }
+
+    uint on( function_t<void,A...> func ){
+        uint _hash = EVENT_NODEPP::HASH();
+        every_queue.push({ func, _hash });
+        return _hash;
+    }
+
+    uint once( function_t<void,A...> func ){
+        uint _hash = EVENT_NODEPP::HASH();
+        once_queue.push({ func, _hash }); 
+        return _hash;
+    }
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    event_t( _ev func ){ once_ev = new _ev(func); }
     event_t(){  }
    ~event_t(){  }
 

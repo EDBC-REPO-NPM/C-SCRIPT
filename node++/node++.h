@@ -3,14 +3,29 @@
 
 #include "algorithm.h"
 #include "process.h"
-#include "event.h"
+#include "console.h"
 #include "loop.h"
 
 namespace process {
-    void next(){
-        if( process::loop::is_active() ) process::loop::next();
-        if( process::poll::is_active() ) process::poll::next();
+
+    void start( int argc, char** args ){
+        int i=1; while( i ++< argc ) 
+        process::args.push(args[i]);
     }
+
+    void next(){
+        static bool b = 0; if( !b )
+             process::poll::next();
+        else process::loop::next(); b=!b; 
+        #ifndef ARDUINO
+            process::delay(3);
+        #endif
+    }
+
+    bool empty(){
+        return ( process::poll::empty() && process::loop::empty() && process::threads<1 );
+    }
+
 }
 
 #endif

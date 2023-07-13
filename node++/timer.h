@@ -4,54 +4,125 @@
 namespace timer {
 
     template< class V, class... T >
-    int* timeout( V func, uint time, T... args ){ int* out = new int(1); 
-        process::loop::add([=](){ 
-            static uint stamp = process::now() + time;
+    ptr_t<int> timeout( V func, uint time, T... args ){ ptr_t<int> out = new int(1); 
+        process::loop::add([=]( ptr_t<int> out ){ 
+            static uint stamp = process::now() + time; if( stamp > 65500 ) stamp += 36; 
             _Start
             
             while( true ){
                      if( out == nullptr ) _Goto(3);
-                else if(*out == 0 )       _Goto(2);
+                else if(*out <= 0 )       _Goto(2);
                if( process::now() >= stamp ) break;   _Yield(1); 
-            }      func(args...); _Goto(2);
+            }      func(args...);         _Goto(2);
 
             _Yield(4); stamp = process::now() + time; _Goto(0);
-            _Yield(2); delete out; _Yield(3); _Set(4); 
-            _End
-        }); return out;
-    };
-
-    void clear_timeout( int* address ){ if( address != nullptr ) *address = 0; }
-
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    template< class V, class... T >
-    int* interval( V func, uint time, T... args ){ int* out = new int(1); 
-        process::loop::add([=]( int* out ){ 
-            static uint stamp = process::now() + time;
-            _Start
-
-            while( true ){
-                     if( out == nullptr ) _Goto(3);
-                else if(*out == 0 )       _Goto(2);
-                if( process::now() >= stamp ) break; _Yield(1);
-            }       stamp = process::now() + time; func(args...); _Goto(1); 
-
-            _Yield(2); delete out; _Yield(3); _Set(0);
+            _Yield(2); out.reset();       _Yield(3);
             _End
         }, out ); return out;
     };
 
-    void clear_interval( int* address ){ if( address != nullptr ) *address = 0; }
+    template< class V, class... T >
+    ptr_t<int> timeout( V func, uint* time, T... args ){ ptr_t<int> out = new int(1); 
+        process::loop::add([=]( ptr_t<int> out ){ 
+            static uint stamp = process::now() + *time; if( stamp > 65500 ) stamp += 36;
+            _Start
+            
+            while( true ){
+                     if( out == nullptr ) _Goto(3);
+                else if(*out <= 0 )       _Goto(2);
+               if( process::now() >= stamp ) break;   _Yield(1); 
+            }      func(args...);         _Goto(2);
+
+            _Yield(4); stamp = process::now() + *time; _Goto(0);
+            _Yield(2); out.reset();       _Yield(3);
+            _End
+        }, out ); return out;
+    };
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    template< class V, class... T >
+    ptr_t<int> counter( V func, uint time, uint count, T... args ){ ptr_t<int> out = new int(1); 
+        process::loop::add([=]( ptr_t<int> out ){ 
+            static uint stamp = process::now() + time; if( stamp > 65500 ) stamp += 36;
+            static uint iters = count;
+            _Start
+
+            while( true ){
+                     if( out == nullptr ) _Goto(3);
+                else if(*out <= 0 )       _Goto(2);
+                if( process::now() >= stamp ) break; _Yield(1);
+            }   if( iters --<= 0 ) _Goto(2);
+            
+            stamp = process::now() + time; func(args...); _Goto(1); 
+            _Yield(2); out.reset();       _Yield(3);
+            _End
+        }, out ); return out;
+    };
+
+    template< class V, class... T >
+    ptr_t<int> counter( V func, uint* time, uint count, T... args ){ ptr_t<int> out = new int(1); 
+        process::loop::add([=]( ptr_t<int> out ){ 
+            static uint stamp = process::now() + *time; if( stamp > 65500 ) stamp += 36;
+            static uint iters = count;
+            _Start
+
+            while( true ){
+                     if( out == nullptr ) _Goto(3);
+                else if(*out <= 0 )       _Goto(2);
+                if( process::now() >= stamp ) break; _Yield(1);
+            }   if( iters --<= 0 ) _Goto(2);
+            
+            stamp = process::now() + *time; func(args...); _Goto(1); 
+            _Yield(2); out.reset(); _Yield(3);
+            _End
+        }, out ); return out;
+    };
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    template< class V, class... T >
+    ptr_t<int> interval( V func, uint time, T... args ){ ptr_t<int> out = new int(1); 
+        process::loop::add([=]( ptr_t<int> out ){ 
+            static uint stamp = process::now() + time; if( stamp > 65500 ) stamp += 36;
+            _Start
+
+            while( true ){
+                     if( out == nullptr ) _Goto(3);
+                else if(*out <= 0 )       _Goto(2);
+                if( process::now() >= stamp ) break; _Yield(1);
+            }   stamp = process::now() + time; func(args...);   _Goto(1); 
+            _Yield(2); out.reset();       _Yield(3);
+
+            _End
+        }, out ); return out;
+    };
+
+    template< class V, class... T >
+    ptr_t<int> interval( V func, uint* time, T... args ){ ptr_t<int> out = new int(1); 
+        process::loop::add([=]( ptr_t<int> out ){ 
+            static uint stamp = process::now() + *time; if( stamp > 65500 ) stamp += 36;
+            _Start
+
+            while( true ){
+                     if( out == nullptr ) _Goto(3);
+                else if(*out <= 0 )       _Goto(2);
+                if( process::now() >= stamp ) break; _Yield(1);
+            }   stamp = process::now() + *time; func(args...);   _Goto(1); 
+            _Yield(2); out.reset();       _Yield(3);
+
+            _End
+        }, out ); return out;
+    };
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
     template< class T, class V >
-    int* promise( 
+    ptr_t<int> promise( 
         function_t<void,function_t<void,T>,function_t<void,V>> func,
         function_t<void,T> res, function_t<void,V> rej
-    ){  int* out = new int(1);
-        process::loop::add([=]( int* out ){
+    ){  ptr_t<int> out = new int(1);
+        process::loop::add([=]( ptr_t<int> out ){
             static T   resolved;
             static V   rejected;
             _Start
@@ -63,22 +134,23 @@ namespace timer {
 
             while( true ){
                      if( out == nullptr )     _Goto(6);
-                else if(*out == 0 )           _Goto(5);
+                else if(*out <= 0 )           _Goto(5);
                 if( _Get != 2 ) break;        _Yield(2);
             }                                 _Goto(_Get);
+
             _Yield(3); res( resolved );       _Goto(5);
             _Yield(4); rej( rejected );       _Goto(5);
-            _Yield(5); delete out; _Yield(6); _Set(0);
+            _Yield(5); out.reset();           _Yield(6);
             _End
         }, out ); return out;
 
     }
 
     template< class T >
-    int* promise( 
+    ptr_t<int> promise( 
         function_t<void,function_t<void,T>> func, function_t<void,T> res
-    ){  int* out = new int(1);
-        process::loop::add([=]( int* out ){
+    ){  ptr_t<int> out = new int(1);
+        process::loop::add([=]( ptr_t<int> out ){
             static T   resolved;
             _Start
             
@@ -88,17 +160,19 @@ namespace timer {
 
             while( true ){
                      if( out == nullptr )     _Goto(6);
-                else if(*out == 0 )           _Goto(5);
+                else if(*out <= 0 )           _Goto(5);
                 if( _Get != 2 ) break;        _Yield(2);
             }                                 _Goto(_Get);
+
             _Yield(3); res( resolved );       _Goto(5);
-            _Yield(5); delete out; _Yield(6); _Set(0);
+            _Yield(5); out.reset();           _Yield(6);
             _End
         }, out); return out;
 
     }
+    /*────────────────────────────────────────────────────────────────────────────*/
 
-    void clear_promise( int* address ){ if( address != nullptr ) *address = 0; }
+    void clear( ptr_t<int> address ){ if( !address.empty() ) *address = 0; }
 
 }
 
