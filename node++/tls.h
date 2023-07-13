@@ -100,8 +100,8 @@ class tls_t {
 };
 
 namespace tls {
-    tls_t server( function_t<void,socket_t> func ){ return tls_t(func); }
-    tls_t client( function_t<void,socket_t> func ){ return tls_t(func); }
+    tls_t server( function_t<void,ssocket_t> func ){ return tls_t(func); }
+    tls_t client( function_t<void,ssocket_t> func ){ return tls_t(func); }
 }
 
 #endif

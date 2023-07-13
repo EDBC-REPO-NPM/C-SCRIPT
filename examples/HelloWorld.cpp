@@ -1,6 +1,5 @@
 #include "node++/node++.h"
 
-int $Ready() { 
+void $Ready() { 
     console::log("¡Hello World!");    
-    return 0; 
 }

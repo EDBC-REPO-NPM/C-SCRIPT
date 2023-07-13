@@ -1,12 +1,12 @@
-#ifndef NODEPP_PEROPHERIC
-#define NODEPP_PEROPHERIC
+#ifndef NODEPP_CONTROL
+#define NODEPP_CONTROL
 #include "algorithm.h"
 
 #ifdef __WIN32
 #include <windows.h>
 #include <winuser.h>
 
-namespace peripheric {
+namespace control {
 
 	INPUT Input = {0};
 
@@ -117,7 +117,7 @@ namespace keyboard {
 #include <X11/keysym.h>
 #include <X11/extensions/XTest.h>
 
-namespace peripheric {
+namespace control {
 
 ptr_t<Display> dpy         = XOpenDisplay(NULL);
 int            id          = DefaultScreen(&dpy);
@@ -221,7 +221,7 @@ namespace keyboard {
 #include "Keyboard.h"
 #include "Mouse.h"
 
-namespace peripheric {
+namespace control {
 
 namespace screen {
 	

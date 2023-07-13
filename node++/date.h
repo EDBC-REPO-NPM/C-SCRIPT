@@ -226,15 +226,15 @@ void date_t::set_hour( uint hour ){   info->tm_hour = hour; _time = mktime(info)
 void date_t::set_day( uint day ){     info->tm_mday = day;  _time = mktime(info); }
 
 string_t date_t::get_fulltime(){       return (string_t)ctime(&_time);            }
-uint   date_t::get_monthday(){         return (uint)info->tm_mday;                }
-uint   date_t::get_weekday(){          return (uint)info->tm_wday;                }
-uint   date_t::get_yearday(){          return (uint)info->tm_yday;                }
-uint   date_t::get_year(){             return (uint)(info->tm_year+1900);         }
-uint   date_t::get_hour(){             return (uint)info->tm_hour;                }
-uint   date_t::get_day(){              return (uint)info->tm_mday;                }
-uint   date_t::get_month(){            return (uint)info->tm_mon;                 }
-uint   date_t::get_minute(){           return (uint)info->tm_min;                 }
-uint   date_t::get_second(){           return (uint)info->tm_sec;                 }
-uint   date_t::get_stamp(){            return (uint)_time * 1000;                 }
+uint     date_t::get_monthday(){       return (uint)info->tm_mday;                }
+uint     date_t::get_weekday(){        return (uint)info->tm_wday;                }
+uint     date_t::get_yearday(){        return (uint)info->tm_yday;                }
+uint     date_t::get_year(){           return (uint)(info->tm_year+1900);         }
+uint     date_t::get_hour(){           return (uint)info->tm_hour;                }
+uint     date_t::get_day(){            return (uint)info->tm_mday;                }
+uint     date_t::get_month(){          return (uint)info->tm_mon;                 }
+uint     date_t::get_minute(){         return (uint)info->tm_min;                 }
+uint     date_t::get_second(){         return (uint)info->tm_sec;                 }
+uint     date_t::get_stamp(){          return (uint)_time * 1000;                 }
 
 #endif

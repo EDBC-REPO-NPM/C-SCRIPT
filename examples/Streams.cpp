@@ -2,7 +2,7 @@
 #include "node++/path.h"
 #include "node++/fs.h"
 
-int $Ready() { 
+void $Ready() { 
     string_t dir = path::join( process::cwd(), "LICENSE" );
     auto _str = fs::readable( dir );
 
@@ -11,5 +11,4 @@ int $Ready() {
     });
 
     stream::pipe(_str);
-    return 0; 
 }

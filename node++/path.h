@@ -2,6 +2,8 @@
 #define NODEPP_PATH
 
 #include "algorithm.h"
+#include "regex.h"
+#include "map.h"
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
@@ -17,8 +19,8 @@ struct path_t {
 /*────────────────────────────────────────────────────────────────────────────*/
 
 namespace _PATH {
-    header_t get_mimetype_list(){ 
-    return header_t({
+
+    map_t<string_t,string_t> TYPELIST {
 
         { "txt", "text/plain" },
         { "text", "text/plain" },
@@ -84,9 +86,9 @@ namespace _PATH {
         { "docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
         { "pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation" }
 
-    });	
-    }
-};
+    };
+
+}
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
@@ -126,16 +128,16 @@ namespace path {
 
     string_t mimetype( string_t path ){
         string_t ext = extname( path ); if( ext.empty() ) 
-        { return ext; } for( auto x:_PATH::get_mimetype_list() ){
-            if(regex::test( ext, x.first )){ return x.second; }
-        }   return  ::format("aplication/${0}",ext);
+        { return ext; } for( auto x:_PATH::TYPELIST ){
+            if( regex::test( ext, x.first ) ){ return x.second; }
+        }   return regex::format("aplication/${0}",ext);
     }
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
     string_t dirname( string_t path ){ 
         auto vec = regex::split( path, none ); vec.pop(); 
-        vec.shift(); return vec.join( sep );
+        vec.shift(); return regex::join( vec, sep );
     }
 
     string_t basename( string_t path ){ 
@@ -161,7 +163,7 @@ namespace path {
         if( !obj->dir.empty()  ){ _path += obj->dir; }
         if( !obj->base.empty() ){ _path += obj->base; }
         else {
-            if( !obj->name.empty() ){ _path += obj->name + std::to_string("."); }
+            if( !obj->name.empty() ){ _path += obj->name + string::to_string("."); }
             if( !obj->ext.empty() ) { _path += obj->ext; }
         }
         
@@ -202,7 +204,7 @@ namespace path {
         regex_t _d("[.]{3}(/|\\\\\\\\)[^./\\\\]+(/|\\\\\\\\)");
         regex_t _a("[.]{3}(/|\\\\\\\\)[^./\\\\]+");
         regex_t _c("[.]{3}(/|\\\\\\\\)");
-        regex_t _b(sep+"+");
+        regex_t _b( sep + "+" );
         
         string_t null("."); if( path.empty() ) return null;
         path = _b.replace_all( path, sep );
@@ -214,10 +216,9 @@ namespace path {
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    template< class U, class... T >
-    string_t join( U argc, T... args ){ array_t<string_t> B; string_t C = sep;
-        iterate( [&]( auto x ){ B.push(std::to_string(x)); }, argc, args... );
-        return normalize( B.join(C) );
+    template< class... T >
+    string_t join( T... args ){ 
+        return normalize( regex::join( sep, args... ) ); 
     }
 
 }

@@ -1,8 +1,8 @@
 #ifndef NODEPP_REGEX
 #define NODEPP_REGEX
 
-#include <cctype>
-#include <cmath>
+#include "string.h"
+#include "array.h"
 #include "ptr.h"
 
 namespace REGEX_NODEPP {
@@ -59,11 +59,11 @@ class regex_t {
         for( uint i=0; i<_reg->size(); i++ ){ char x = (*_reg)[i];
 
             if( x == ']' || x == '}' || x == ')' ){
-                throw err_t("Error regex at character: "+std::to_string(i));
+                throw err_t(("Error regex at character: "+string::to_string(i)).c_str());
             }
             
             if( x == '?' || x == '*' || x == '+' ){ 
-                if( prv == nullptr ){ throw err_t("Error regex at character: "+std::to_string(i)); }
+                if( prv == nullptr ){ throw err_t(("Error regex at character: "+string::to_string(i)).c_str()); }
                 REGEX_NODEPP::NODE* nw = new REGEX_NODEPP::NODE; switch(x){
                     case '?': nw->r = 1; nw->rep[0] = 0; nw->rep[1] = 1; break;
                     case '*': nw->r = 1; nw->rep[0] = 1; nw->rep[1] =-1; break;
@@ -91,13 +91,13 @@ class regex_t {
             /*────────────────────────────────────────────────────────────────────────────*/
 
             if( x == '{' ){ i++; string_t s; int j=0, k=0; REGEX_NODEPP::NODE* nw = new REGEX_NODEPP::NODE;
-                if( prv == nullptr ){ throw err_t("Error regex at character: "+std::to_string(i)); }
+                if( prv == nullptr ){ throw err_t(("Error regex at character: "+string::to_string(i)).c_str()); }
 
                 while( i<_reg->size() ){ int y = (*_reg)[i];
-                    if( y == ',' ){ nw->rep[j] = stoi(s); s.erase(); i++; j++; continue; }
-                    if( y == '}' ){ if( !s.empty() ){ nw->rep[j] = stoi(s); s.erase(); } k--; break; } 
-                    if( !isdigit(y) ){ throw err_t("Error regex at character: "+std::to_string(i)); } s.push(y); i++;
-                }   if( k!=-1 ){ throw err_t("Error regex at character: "+std::to_string(i)); }
+                    if( y == ',' ){ nw->rep[j] = string::to_int(s); s.clear(); i++; j++; continue; }
+                    if( y == '}' ){ if( !s.empty() ){ nw->rep[j] = string::to_int(s); s.clear(); } k--; break; } 
+                    if( !isdigit(y) ){ throw err_t(("Error regex at character: "+string::to_string(i)).c_str()); } s.push(y); i++;
+                }   if( k!=-1 ){ throw err_t(("Error regex at character: "+string::to_string(i)).c_str()); }
 
                     nw->alt = new REGEX_NODEPP::NODE; nw->alt->nxt.push(act);
                     prv->nxt[ prv->nxt.size()-1 ] = nw; 
@@ -112,12 +112,12 @@ class regex_t {
                 while( i<_reg->size() ){ int y = (*_reg)[i];
                     if( j == 0 && y == '^' ){ n = true; i++; j++; continue; }
                     if( y == ']' ){ k--; break; } s.push(y); i++; j++;
-                }   if( k!=-1 ){ throw err_t("Error regex at character: "+std::to_string(i)); }
+                }   if( k!=-1 ){ throw err_t(("Error regex at character: "+string::to_string(i)).c_str()); }
                 
                 act->alt = new REGEX_NODEPP::NODE; for( uint i=0; i<s.size(); i++ ){ 
                     if( s[i+1] == '-' && (i+2)<s.size() ){
-                        int a = std::min( (int)s[i], (int)s[i+2] ); 
-                        int b = std::max( (int)s[i], (int)s[i+2] );
+                        int a = math::min( (int)s[i], (int)s[i+2] ); 
+                        int b = math::max( (int)s[i], (int)s[i+2] );
                         for( int j=a; j<=b; j++ ){
                             REGEX_NODEPP::NODE* nw = new REGEX_NODEPP::NODE; nw->data = j; nw->n = n;
                             act->alt->nxt.push(nw); nw->nxt.push(null());
@@ -136,7 +136,7 @@ class regex_t {
                     if( y == '(' ){ j++; } else if( y == ')' ){ j--; }
                     if( j<0 && y == ')' ){ break; } s.push(y); i++; 
                 }
-                if( j!=-1 ){ throw err_t("Error regex at character: "+std::to_string(i)); }
+                if( j!=-1 ){ throw err_t(("Error regex at character: "+string::to_string(i)).c_str()); }
                 if( !s.empty() ){ act->alt = compile(&s); } continue;
             }
 
@@ -170,7 +170,7 @@ class regex_t {
     ptr_t<uint> match( string_t _str, uint _off, REGEX_NODEPP::NODE* NODE ){
         if( icase ){ _str.to_lower_case(); }
         
-        ptr_t<uint> _res = new uint[2]; _res[0]=0; _res[1]=0;
+        ptr_t<uint> _res(2); _res[0]=0; _res[1]=0;
         if( _str.empty() ) return _res;
 
         uint i=_off; NODE->pipe([&]( REGEX_NODEPP::NODE* NODE ){ 
@@ -230,15 +230,16 @@ class regex_t {
                 switch( NODE->data ){
 
                     case 'b': if( data == 1 || i == 0 ){ return NODE->nxt[0]; } return end(0); break;
-                    case '.': if( data == 0 || data == 1 ){ return end(0); }    break;
-                    case 'B': if( data == 1 || i == 0 ){ return end(0); }       break;
-                    case 's': if( !isblank(data) ){ return end(0); }            break;
-                    case 'S': if(  isblank(data) ){ return end(0); }            break;
-                    case 'w': if( !isalnum(data) ){ return end(0); }            break;
-                    case 'W': if(  isalnum(data) ){ return end(0); }            break;
-                    case 'd': if( !isdigit(data) ){ return end(0); }            break;
-                    case 'D': if(  isdigit(data) ){ return end(0); }            break;
-                    default:  return end(0);                                    break;
+                    case '.': if( data == 0 || data == 1 ) { return end(0); }   break;
+                    case 'B': if( data == 1 || i == 0 )    { return end(0); }   break;
+                    case 's': if( !string::is_space(data) ){ return end(0); }   break;
+                    case 'S': if(  string::is_space(data) ){ return end(0); }   break;
+                    case 'w': if( !string::is_alnum(data) ){ return end(0); }   break;
+                    case 'W': if(  string::is_alnum(data) ){ return end(0); }   break;
+                    case 'd': if( !string::is_digit(data) ){ return end(0); }   break;
+                    case 'D': if(  string::is_digit(data) ){ return end(0); }   break;
+                    default:                                 return end(0);     break;
+                    
                 }   return end(1);
             }
 
@@ -263,108 +264,76 @@ class regex_t {
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
+    ptr_t<uint> search( string_t _str, uint s=0 ) {
+        for( uint i=s; i<_str.size(); i++ ){
+            auto idx = this->match( _str, i, &root );
+            if( idx[0] != idx[1] ) return idx;
+        }   return (uint*) nullptr;
+    }
+    
+    /*────────────────────────────────────────────────────────────────────────────*/
+
     bool test( string_t _str ) {
-        for( uint i=0; i<_str.size(); i++ ){
-
-            auto match = this->match( _str, i, &root );
-             if( match[0] != match[1] ) return 1;
-
-        }   return 0; 
+        auto idx = search( _str );
+        if( idx == nullptr )   return 0;
+        if( idx[0] == idx[1] ) return 0;
+                               return 1;
     }
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    ptr_t<uint> search( string_t _str ){
-        for( uint i=0; i<_str.size(); i++ ){
-            auto match = this->match( _str, i, &root );
-            if( match[0] != match[1] ) return match;
-        }   return nullptr;
-    }
-    
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    string_t match( string_t _str ){ 
-        for( uint i=0; i<_str.size(); i++ ){
-
-            auto match = this->match( _str, i, &root );
-            if( match[0] != match[1] )
-                return _str.slice( match[0], match[1] );
-
-        }       return std::to_string("");
-    }
-    
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    array_t<string_t> match_all( string_t _str ){
-        array_t<string_t> result; for( uint i=0; i<_str.size(); i++ ){
-            
-            auto match = this->match( _str, i, &root ); 
-            if( match[0] != match[1] ){  i = match[1] - 1; 
-                result.push( _str.slice( match[0], match[1] ) );
-            }
-
-        }   return result; 
+    string_t match( string_t _str ) { 
+        auto idx = search( _str );
+        if( idx == nullptr )   return string::to_string("");
+        if( idx[0] == idx[1] ) return string::to_string("");
+            return _str.slice( idx[0], idx[1] );
     }
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
     string_t replace( string_t _str, string_t _rep ){
-        string_t result; for( uint i=0; i<_str.size(); i++ ){
-            
-            auto match = this->match( _str, i, &root ); 
-            if( match[0] != match[1] ){ 
-                    
-                for( uint i=0; i<match[0]; i++ ){
-                    result.push( _str[i] );
-                }   result += _rep;
-
-                for( uint i=match[1]; i<_str.size(); i++ ){
-                    result.push( _str[i] );
-                }
-
-            break; }
-        }   return result; 
+        auto idx = search( _str );
+        if( idx == nullptr )     return _str;
+        if( idx[0] == idx[1] )   return _str;
+            _str.splice( idx[0], idx[1] - idx[0], _rep ); return _str;
     }
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    string_t replace_all( string_t _str, string_t _rep ){
-        for( uint i=0; i<_str.size(); i++ ){ string_t s_res;
-
-            auto match = this->match( _str, i, &root );
-            if( match[0] != match[1] ){
-
-                for( uint i=0; i<match[0]; i++ ){ s_res.push( _str[i] ); }
-                s_res += _rep; i = match[1] - 1;
-
-                for( uint i=match[1]; i<_str.size(); i++ ){ s_res.push( _str[i] ); }
-                _str = s_res;
-
-            }
-        
-        }   return _str; 
-    }
-    
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    array_t<string_t> split( string_t _str ){ 
-        array_t<string_t> result;
-
-        function_t<ptr_t<uint>,string_t> mtc = [&]( string_t _s ){
-            ptr_t<uint> idx; for( uint i=0; i<_s.size(); i++ ){
-                idx = this->match( _s, i, &root );
-                if( idx[0] != idx[1] ){ return idx; }
-            }   return idx;
-        };
-        
-        while(1){ ptr_t<uint> idx = mtc(_str);
-            if( idx[0] != idx[1] ) { 
-                if( idx[1] == _str.size() ){ break; }
-                result.push( _str.slice( 0, idx[0] ));
-                _str = _str.slice( idx[1] ); continue; 
-            } else { result.push(_str); break; }
+    array_t<ptr_t<uint>> search_all( string_t _str ) {
+        array_t<ptr_t<uint>> result; uint s=0; while(1){
+            auto idx = search( _str, s );
+            if( idx == nullptr )     return result;
+            if( idx[0] == idx[1] )   return result; s=idx[1];
+                ptr_t<uint> mem(2); mem[0]=idx[0], mem[1]=idx[1]; result.push(mem);
         }
+    }
+    
+    /*────────────────────────────────────────────────────────────────────────────*/
 
+    array_t<string_t> match_all( string_t _str ){
+        auto idx = search_all( _str ); array_t<string_t> result;
+        for( auto x : idx )
+            result.push(_str.slice( x[0], x[1] ));
+            return result;
+    }
+    
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    string_t replace_all( string_t _str, string_t _rep ) {
+        auto idx = search_all( _str ).reverse();
+        for( auto x : idx ){
+            _str.splice( x[0], x[1] - x[0], _rep );
+        }   return _str;
+    }
+    
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    array_t<string_t> split( string_t _str ){ uint n = 0, m = 0;
+        auto idx = search_all( _str ); array_t<string_t> result;
+        for( auto x : idx )
+            { result.push(_str.slice( m, x[0] )); m=x[1]; n++; }
+        if( m<_str.size() ) result.push(_str.slice( m, _str.size() )); 
         return result;
     }
 
@@ -408,38 +377,11 @@ namespace regex {
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    string_t slugify( string_t input, string_t _jn="_" ){
-            
-        array_t<string_t> x = {
-            "n", "ñ",          "c", "ç|©|¢",
-            "u", "ú|ù|û|ü" ,   "i", "í|ì|î|ï" ,
-            "e", "é|è|ê|ë" ,   "a", "á|à|ã|â|ä" ,
-            "o", "ó|ò|ô|õ|ö" , _jn, "[ \\W\t\n]+" 
-        };
-
-        for( uint i=0; i<x.size(); i+=2 ){
-            regex_t reg( x[i+1], "i" );
-                   input = reg.replace_all( input, x[i] );
-        }   return input.to_lower_case();
-
-    }
-
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    string_t to_capital_case( string_t text ){
-        regex_t reg("\\w+"); for( auto x:reg.match_all( text ) ) {
-            regex_t nreg(x); x[0] = toupper(x[0]);
-            text = nreg.replace_all( text, x );
-        }   return text;
-    }
-
-    /*────────────────────────────────────────────────────────────────────────────*/
-
     array_t<string_t> split( string_t _str, char ch=0 ){
         array_t<string_t> result; for( auto i:_str ){ string_t empty;
             if( i == ch ){ result.push(empty); continue; }
-            else if( ch==0)     { result.push(empty); }
-            if( result.size()==0 ) { result.push(empty); }
+            else if( ch==0)       { result.push(empty); }
+            if( result.size()==0 ){ result.push(empty); }
             int length = result.size()-1; result[length] += i; 
         }   return result;
     }
@@ -461,30 +403,29 @@ namespace regex {
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    template< class T, class... V >
-    string_t join( T argc, V... args, string_t c="," ){ string_t res = std::to_string(argc);
-        iterate( [&]( auto x ){ res += std::to_string(x)+c; }, args... );
-        return res.slice( 0, -1 );
+    template< class T >
+    string_t join( array_t<T> A, string_t c="," ){ 
+        uint n=A.size(); string_t B; for( auto x : A ){
+            if( n-->1 ) B += x + c; else B += x;
+        }   return B;
     }
 
-    template< class T >
-    string_t join( array_t<T> argc, string_t c="," ){ 
-        string_t B; for( auto i=argc.begin(); i!=argc.end(); i++ ){
-            if( !std::is_same<string_t,T>::value && !std::is_same<std::string,T>::value && !std::is_same<char*,T>::value )
-            { B += std::to_string(*i); } else { B += (*i); } if( i+1 != argc.end() ) { B += c; }
-        }   return B;
+    template< class... V >
+    string_t join( string_t c, V... args ){
+        uint n=0; string::map([&]( string_t x ){ n++; },args...);
+        string_t B; string::map([&]( string_t x ){
+            if( n-->1 ) B += x + c; else B += x; 
+        },args...); return B;
     }
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    template< class... T >
-    string_t format( std::string input, T... args ){
-        int i=0; iterate([&]( auto arg ){ std::string rep;
-            if( std::is_same<std::string,decltype(arg)>::value )
-            { rep = arg; } else { rep = std::to_string(arg); }
-            regex_t reg("\\$\\{"+std::to_string(i)+"\\}"); 
-            input = reg.replace_all( input, rep ); i++;
-        },  args... ); return input;
+    template< class V, class... T >
+    string_t format( V val, T... args ){
+        string_t result = string::to_string(val); uint n=0; string::map([&]( string_t arg ){
+            string_t reg = "\\$\\{" + string::to_string(n) + "\\}"; 
+            result = replace_all(result,reg,arg); n++;
+        },  args... ); return result;
     }
     
 }

@@ -1,6 +1,10 @@
 #ifndef NODEPP_CONSOLE
 #define NODEPP_CONSOLE
 
+#include "algorithm.h"
+#include "string.h"
+#include "array.h"
+
 namespace console {
 
 #ifndef ARDUINO
@@ -19,65 +23,19 @@ namespace console {
     template< class... T >
     void start( T... args ){ Serial.begin(args...); }
 
-    int scan( const char* format, ... ) {
-      char buffer[256]; int count = 0;
-
-      va_list args;
-      va_start(args, format);
-      vsnprintf(buffer, sizeof(buffer), format, args);
-      va_end(args);
-
-      for (int i = 0; buffer[i]; i++) {
-        if (buffer[i] == '%') {
-          i++;
-          if (buffer[i] == 'd' || buffer[i] == 'i') {
-            int* arg = va_arg(args, int*);
-            while (!Serial.available()) {}
-            *arg = Serial.parseInt();
-            count++;
-          } else if (buffer[i] == 'f') {
-            float* arg = va_arg(args, float*);
-            while (!Serial.available()) {}
-            *arg = Serial.parseFloat();
-            count++;
-          }
-        } else {
-          while (!Serial.available()) {}
-          char c = Serial.read();
-          if (c != buffer[i]) break;
-        }
-      }
-      
-      return count;
+    template< class... T >
+    int print( const char* format, T... args ){
+      return string::format( format, args... ).size();
     }
 
-    int print( const char* format, ... ){
-      char buffer[256];
-
-      va_list args;
-      va_start(args, format);
-      vsnprintf(buffer, sizeof(buffer), format, args);
-      va_end(args); int i=0;
-
-      for( i=0; buffer[i]; i++ ) Serial.write( buffer[i] ); 
-      return i;
+    template< class... T >
+    int scan( const char* format, T... args ) { while( !Serial.available() ){}
+      return string::scan( Serial.read(), format, args... );
     }
 
 #endif
 
     void clear(){ print("\033c"); }
-
-    template< class T >
-    int log( T args ){ return print("%s\n", std::to_string( args ).c_str() ); }
-
-    template< class V, class... T >
-    int log( V argc, T... args ){ 
-        if(!regex::test(std::to_string(argc),"\\$\\{\\d+\\}","i") ){
-            iterate([&]( auto arg ){ print("%s ",std::to_string(arg).c_str()); }, argc, args... );
-        } else {
-            print("%s", format( argc, args... ).c_str() );
-        }
-    print("\n"); return 1; }
 
     template< class... T >
     int done( T... input ){ print("\033[0;32m\033[1mDONE: \033[0m\033[0m"); return log(input...); }
@@ -94,15 +52,18 @@ namespace console {
     template< class... T >
     int success( T... input ){ print("\033[0;32m\033[1mSUCCESS: \033[0m\033[0m"); return log(input...); }
 
+    template< class... T >
+    int log( T... args ){ string::map([=]( string_t arg ){ print("%s ",(char*)arg); }, args... ); return print("\n"); }
+
 }
 
 class debug_t { 
     
     protected: string_t message; public:
-   ~debug_t(){ console::log( "${0} closed", message ); }
+   ~debug_t(){ console::log( "%s closed", message.c_str() ); }
 
-    debug_t( string_t msg ){ console::log( "${0} open", msg ); message = msg; }
-    void log( string_t msg ){ console::log( "--  ${0}", msg ); }
+    debug_t( string_t msg ){ console::log( "%s open", msg.c_str() ); message = msg; }
+    void log( string_t msg ){ console::log( "--  %s", msg.c_str() ); }
 
     debug_t( const debug_t& o) = delete;
     debug_t& operator=( const debug_t& o ) = delete;
@@ -111,4 +72,5 @@ class debug_t {
     debug_t& operator=( const debug_t&& o ) = delete;
 
 };
+
 #endif

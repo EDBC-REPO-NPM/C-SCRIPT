@@ -1,16 +1,9 @@
 #ifndef NODEPP_STRING
 #define NODEPP_STRING
 
-#include <initializer_list>
-#include <algorithm>
 #include <cstring>
-#include <cctype>
-#include <string>
-
 #include "math.h"
 #include "ptr.h"
-
-namespace std { string to_string( string input ){ return input; } }
 
 namespace string {
 
@@ -22,16 +15,17 @@ namespace string {
     int is_upper( char c ){ return ( c>='A' && c<='Z' ); }
     int is_digit( char c ){ return ( c>='0' && c<='9' ); }
     int is_print( char c ){ return ( c>=32 && c<=126 ); }
-    int is_ascii( char c ){ return ( c>=0 && c<=127 ); }
+    int is_ascii( char c ){ return ( c>=0 && c<=126 ); }
     int is_contr( char c ){ return ( c<32 || c==127 ); }
     int  is_null( char c ){ return ( c==0 ); }
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    ptr_t<char> buffer( uint n ){ n++; auto b = ptr_t<char>(n); while(n-->0) b[n]=0; return b; }
+    ptr_t<char> buffer( uint n ){ n++; auto b = ptr_t<char>(n); while(n-->0) b[n]='\0'; return b; }
+    ptr_t<char> null(){ auto b = ptr_t<char>((uint)0); b[0]='\0'; return b; }
 
     /*────────────────────────────────────────────────────────────────────────────*/
-
+    
     int is_alnum( char c ){ return ( is_alpha(c) || is_digit(c) ); }
     int is_punct( char c ){ return ( is_print(c) && !is_space(c) && !is_alnum(c) ); }
 
@@ -45,96 +39,82 @@ namespace string {
 
 /*────────────────────────────────────────────────────────────────────────────*/
 
-class string_t : public std::string { public:
-
-    using self = std::string;
-
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    string_t() : self() {}
-
-    string_t( const char* s ) : self( s ) {}
-    string_t( const self& str ) : self( str ) {}
-    string_t( const string_t& str ) : self( str ) {}
-    string_t( std::size_t n, char c ) : self( n, c ) {}
-    string_t( const char* s, std::size_t n ) : self( s, n ) {}
-
-    template< class type >  
-    string_t( type first, type last ) : self ( first, last ) {}
-    string_t( const self& str, std::size_t pos, std::size_t len=npos ) : self( str, pos, len ) {}
-    string_t( const string_t& str, std::size_t pos, std::size_t len=npos ) : self( str, pos, len ) {}
+class string_t {
     
+    protected: ptr_t<char> buffer;
+
     /*────────────────────────────────────────────────────────────────────────────*/
+    public:
+    virtual ~string_t(){  }
 
-    string_t& operator=( const string_t& x ) { self::operator=(x); return (*this); }
-    string_t& operator=( const self& x ) { self::operator=(x); return (*this); }
-    string_t& operator=( string_t&& x ) { self::operator=(x); return (*this); }
-    string_t& operator=( self&& x ) { self::operator=(x); return (*this); }
-
-    template< class... T >
-    string_t& operator=( T... x ){ self::operator=(x...); return (*this); }
-    
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    string_t to_lower_case() noexcept { 
-        for( auto x = this->begin(); x!=this->end(); x++ ){
-            (*x) = tolower( (int)(*x) );
-        }   return (*this);
+    string_t( const uint& n ) noexcept {
+        buffer = string::buffer(n);
     }
 
-    string_t to_upper_case() noexcept {
-        for( auto x = this->begin(); x!=this->end(); x++ ){
-            (*x) = toupper( (int)(*x) );
-        }   return (*this);
+    string_t( const char& argc ) noexcept {
+        buffer = string::buffer(1); buffer[0] = argc;
     }
 
-    string_t to_capital_case() noexcept {
-        bool b=1; for( auto x = this->begin(); x!=this->end(); x++ ){
-            if( string::is_lower(*x) && b==1 ){ (*x) = string::to_upper(*x); b=0; continue; }
-            if(!string::is_alpha(*x) ){ b=1; }{ (*x) = string::to_lower(*x); }
-        }   return (*this);
+    string_t( const char& val, uint n ) noexcept {
+        if( n==0 ){ 
+            buffer = string::null(); return;
+        }   buffer = string::buffer(n);
+        while( n-->0 ){ (*this)[n] = val; }
     }
+
+    string_t() noexcept { buffer = string::null(); }
+
+    string_t( const char* argc ) noexcept {  uint n=0;
+        if( argc == nullptr || (n=strlen(argc))==0 ){ 
+            buffer = string::null(); return;
+        }   buffer = string::buffer(n); memcpy( &buffer, argc, n );
+    }
+
+    string_t( const char* argc, uint n ) noexcept {
+        if( argc == nullptr || n == 0 ){ 
+            buffer = string::null(); return;
+        }   buffer = string::buffer(n);
+        memcpy( &buffer, argc, n );
+    }
+
+    string_t( const ptr_t<char>& argc ) noexcept { buffer = argc; }
         
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    string_t replace( function_t<bool,char&> func, char t ) noexcept {
-        uint n=0; for( auto x : *this ){ if(func(x)) (*this)[n]=t; n++; } return (*this);
-    }
+    char* end() const noexcept { return &buffer + size(); }
 
-    string_t remove( function_t<bool,char&> func ) noexcept {
-        uint n=size(); while( n-->0 ){ if( func((*this)[n]) ) erase(n); } return (*this);
-    }
+    char* begin() const noexcept { return &buffer; }
 
-    string_t reverse() const noexcept { string_t n_buffer(this->begin(),this->end());
-        uint n=size(); for( auto x : *this ){ n--; n_buffer[n]=x; } return n_buffer;
-    }
-
-    string_t copy() noexcept { string_t n_buffer(this->begin(),this->end());
-        uint n=size(); for( auto x : *this ){ n--; n_buffer[n]=x; } return n_buffer;
-    }
-
-    char reduce( function_t<char,char,char> func ){ char act = *(this->begin());
-        for( auto x=this->begin()+1; x != this->end(); x++ )
-           { act = func( act, (*x) ); } return act;
-    }
-    
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    string_t sort( function_t<bool,char&,char&> func ) noexcept {
-        auto n_buffer = copy();
+    uint first() const noexcept { return 0; }
+    bool empty() const noexcept { return buffer.empty(); }
+    uint  size() const noexcept { return empty() ? 0 : buffer.size() - 1; }
+    uint  last() const noexcept { return empty() ? 0 : buffer.size() - 2; }
 
-        while(1){ int nn = 0;
-            for( uint i=0; i<size(); i++ ){
-                int act=i, prv = i-1; if( prv<0 ) continue;
-                char _act = n_buffer[act], _prv = n_buffer[prv];
-                if( func( _prv, _act ) == 0 ){ continue; } nn++;
-                n_buffer[act] = _prv; n_buffer[prv] = _act;
-            }   if( nn == 0 ) break;
-        }
-        
-        return n_buffer;
-    } 
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    string_t operator+=( const string_t& oth ){ 
+        if( oth.empty() ){ return *this; } string_t ths = copy(); uint n = 0;
+        buffer = string::buffer( this->size() + oth.size() );
+        for( auto x : ths ){ (*this)[n] = x; n++; }
+        for( auto x : oth ){ (*this)[n] = x; n++; } return *this;
+    }
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    bool operator> ( const string_t& oth ) const noexcept { return compare( oth ) == 1; }
+    bool operator>=( const string_t& oth ) const noexcept { return compare( oth ) >= 0; }
+    bool operator<=( const string_t& oth ) const noexcept { return compare( oth ) <= 0; }
+    bool operator< ( const string_t& oth ) const noexcept { return compare( oth ) ==-1; }
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    bool operator==( const string_t& oth ) const noexcept { return compare( oth ) == 0; }
+    bool operator!=( const string_t& oth ) const noexcept { return compare( oth ) != 0; }
     
+    char& operator[]( uint n ) const noexcept { return buffer[n]; }
+
     /*────────────────────────────────────────────────────────────────────────────*/
 
     int index_of( function_t<bool,char&> func ) const noexcept {
@@ -142,15 +122,8 @@ class string_t : public std::string { public:
     }
 
     int count( function_t<bool,char&> func ) const noexcept { 
-        int n=size(); for( auto x : *this ){ if( func(x) ) n++; } return n;
+        int n=0; for( auto x : *this ){ if( func(x) ) n++; } return n;
     }
-    
-    /*────────────────────────────────────────────────────────────────────────────*/
-
-    void unshift( char value ){ self::insert( this->begin(), value ); }
-    void push( char value ){ self::insert( this->end(), value ); }
-    void shift(){ self::erase( this->begin() ); }
-    void pop(){ self::erase( this->end() ); }
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
@@ -169,60 +142,178 @@ class string_t : public std::string { public:
     void map( function_t<void,char&> func ) const noexcept { 
         for( auto x : *this ) func(x);
     }
+        
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    int compare( const string_t& oth ) const noexcept {
+        if( size() < oth.size() )     return -1; 
+        if( size() > oth.size() )     return  1; 
+        uint n = size(); while( n-->0 ){
+            if( (*this)[n] < oth[n] ) return -1;
+            if( (*this)[n] > oth[n] ) return  1;
+        }   return 0;
+    }
+        
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    char reduce( function_t<char,char&,char&> func ) noexcept { char act = (*this->begin());
+        for( auto x=this->begin() + 1; x != this->end(); x++ )
+           { act = func( act, *x ); } return act;
+    }
+
+    string_t replace( function_t<bool,char&> func, char t ) noexcept {
+        uint n=0; for( auto x : *this ){ if(func(x)) (*this)[n]=t; n++; } return (*this);
+    }
+
+    string_t remove( function_t<bool,char&> func ) noexcept {
+        uint n=size(); while( n-->0 ){ if( func((*this)[n]) ) erase(n); } return (*this);
+    }
+
+    string_t reverse() noexcept { auto n_buffer = copy();
+        uint n=size(); for( auto x : *this ){ n--; n_buffer[n]=x; } return n_buffer;
+    }
+
+    string_t copy() const noexcept { auto n_buffer = string::buffer(size()); 
+        memcpy( &n_buffer, &buffer, size() ); return n_buffer;
+    }
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    string_t slice( int start=0, int end=0 ){
+    string_t sort( function_t<bool,char&,char&> func ) noexcept {
+        auto n_buffer = copy();
+
+        while(1){ int nn = 0;
+            for( uint i=0; i<size(); i++ ){
+                int act=i, prv = i-1; if( prv<0 ) continue;
+                char _act = n_buffer[act], _prv = n_buffer[prv];
+                if( func( _prv, _act ) == 0 ){ continue; } nn++;
+                n_buffer[act] = _prv; n_buffer[prv] = _act;
+            }   if( nn == 0 ) break;
+        }
+        
+        return n_buffer;
+    } 
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    void unshift( char value ) noexcept { insert( first(), value ); }
+    void push( char value ) noexcept { insert( size(), value ); }
+    void shift() noexcept { erase( first() ); }
+    void clear() noexcept { buffer.reset(); }
+    void pop() noexcept { erase( last() ); }
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    void insert( uint index, const char& value ) noexcept {
+        if( empty() ){ buffer = string::buffer(1); buffer[0] = value; } 
+        else { 
+            if( index > size() ) return; uint i=size(), n=size()+1;
+                                 auto n_buffer = string::buffer(n);
+            while( n-->0 ){ 
+                if( n == index ){ n_buffer[n] = value; }
+                else { i--; n_buffer[n] = buffer[i]; }
+            }   buffer = n_buffer;
+        }
+    }
+
+    void erase( uint index ) noexcept {
+        if( empty() ) return; else {
+            if( index >= size() ) return; auto n_buffer = string::buffer(last());
+            for( uint i=0, n=0; i<size(); i++ )
+                if( i != index ){ n_buffer[n] = buffer[i]; n++; }
+                buffer = n_buffer;
+        }
+    }
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    string_t slice( int start=0, int end=0 ) noexcept { if(empty()) return *this; 
 
         if( start < 0 ){ start = size() + start; }    if( end <= 0 ){ end = size() + end; }
         if( (uint)start > size() ){ start = size(); } if( (uint)end > size() ){ end = size(); }
         if( end < start ){ end = size(); }   
 
-        auto a = math::min( this->begin() + end, this->end() );
-        auto b = this->begin() + start;
+        uint a = math::min( first() + end, size() );
+        uint b = first() + start, _sz = a - b;
 
-        string_t B( b, a ); uint n=B.size(); 
-        while( a-->b && n>0 ){ n--; B[n] = *a; }
+        auto n_buffer = string::buffer(_sz); uint n = _sz;
+        while( a-->b && n > 0 ){ n--; n_buffer[n] = buffer[a]; }
         
-        return B;
+        return n_buffer;
     }
 
     /*────────────────────────────────────────────────────────────────────────────*/
-
-    string_t splice( int start=0, uint del=0 ){
+ 
+    string_t splice( int start=0, uint del=0 ) noexcept { if(empty()) return *this;
         
         if( start < 0 ){ start = size() + start; } if( (uint)start > size() ){ start = size(); }
             del += start; if( del > size() ) del = del - size();
 
-        auto a = math::min( this->begin() + del, this->end() );
-        auto b = this->begin() + start;
-            
-        string_t B( b, a ); uint n=B.size(); if( del != 0 )
-        while( a-->b && n>0 ){ n--; B[n] = *a; erase(a); }
+        uint a = math::min( first() + del, size() );
+        uint b = first() + start, _sz = a - b;
+
+        auto n_buffer = string::buffer(_sz); uint n = _sz; if( del != 0 )
+        while( a-->b && n > 0 ){ n--; n_buffer[n] = buffer[a]; erase(a); }
         
-        return B;
+        return n_buffer;
     }
 
-    string_t splice( int start, uint del, string_t argc ){
+    string_t splice( int start, uint del, const string_t& argc ) noexcept { if(empty()) return *this;
         
         if( start < 0 ){ start = size() + start; } if( (uint)start > size() ){ start = size(); }
             del += start; if( del > size() ) del = del - size();
-            
-        auto a = math::min( this->begin() + del, this->end() );
-        auto b = this->begin() + start;
+    
+        uint a = math::min( first() + del, size() );
+        uint b = first() + start, _sz = a - b;
 
-        string_t B( b, a ); uint n=B.size(); if( del != 0 )
-        while( a-->b && n>0 ){ n--; B[n] = *a; erase(a); }
-        argc.map([&]( char x ){ insert( this->begin() + start, x ); start++; });
-        return B;
+        auto n_buffer = string::buffer(_sz); uint n = _sz; if( del != 0 )
+        while( a-->b && n > 0 ){ n--; n_buffer[n] = buffer[a]; erase(a); }
+        
+        argc.map([&]( char x ){ insert( start, x ); start++; });
+        return n_buffer;
+    }
+    
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    string_t to_lower_case() noexcept { if(empty()) return *this;
+        for( auto x = this->begin(); x!=this->end(); x++ ){
+            (*x) = tolower( (int)(*x) );
+        }   return (*this);
+    }
+
+    string_t to_upper_case() noexcept { if(empty()) return *this;
+        for( auto x = this->begin(); x!=this->end(); x++ ){
+            (*x) = toupper( (int)(*x) );
+        }   return (*this);
+    }
+
+    string_t to_capital_case() noexcept { if(empty()) return *this;
+        bool b=1; for( auto x = this->begin(); x!=this->end(); x++ ){
+            if( string::is_lower(*x) && b==1 ){ (*x) = string::to_upper(*x); b=0; continue; }
+            if(!string::is_alpha(*x) ){ b=1; }{ (*x) = string::to_lower(*x); }
+        }   return (*this);
     }
 
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    explicit operator char*(void) const { return (char*)c_str(); }
+    explicit operator char* (void) const {  
+        if( !empty() ) return &buffer; return (char*) "\0";
+    }
+
+    /*────────────────────────────────────────────────────────────────────────────*/
+
+    const char* c_str() const noexcept { return (char*)(*this); }
     explicit operator bool(void) const { return empty(); }
-
+    
 };
+
+/*────────────────────────────────────────────────────────────────────────────*/
+
+string_t operator+( const string_t& A, const string_t& B ){
+    string_t C = string::buffer( A.size() + B.size() ); uint n = 0;
+    for( auto x : A ){ C[n] = x; n++; }
+    for( auto x : B ){ C[n] = x; n++; } return C;
+}
 
 /*────────────────────────────────────────────────────────────────────────────*/
 

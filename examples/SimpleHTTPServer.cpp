@@ -1,9 +1,6 @@
 #include "node++/node++.h"
-#include "node++/timer.h"
 #include "node++/http.h"
-#include "node++/path.h"
 #include "node++/date.h"
-#include "node++/fs.h"
 
 void server( int process ){
 
@@ -11,7 +8,7 @@ void server( int process ){
 
         if( cli.path.size() <= 1 ){
             cli.write_header(200,{{ "content-type", "text/html" }});
-            cli.write( format("${0}",date::fulltime())); return;
+            cli.write( date::fulltime() ); return;
         }
 
         else if( regex::split( cli.path.slice(1), "/" )[0] == "output" ){
@@ -39,4 +36,4 @@ void server( int process ){
 
 }
 
-int $Ready() { server(0); return 0; }
+void $Ready() { server(0); }

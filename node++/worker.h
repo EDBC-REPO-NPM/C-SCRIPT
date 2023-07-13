@@ -4,8 +4,6 @@
 
 using worker_t = std::thread;
 
-/*────────────────────────────────────────────────────────────────────────────*/
-
 namespace process {
 
 namespace mutex {
@@ -46,7 +44,7 @@ namespace worker {
     /*public*/
     int mut = 0;
 
-    bool is_active() { return threads > 0; }
+    bool empty() { return threads<1; }
 
     template< class... T >
     void add( T... args ){

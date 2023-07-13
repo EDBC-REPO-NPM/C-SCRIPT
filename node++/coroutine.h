@@ -4,9 +4,9 @@
 /*────────────────────────────────────────────────────────────────────────────*/
 
 #ifndef ARDUINO
-#define $Ready _init_(); int main( int argc, char** args ){ nodepp _v_( argc, args ); return _init_(); } int _init_
+#define $Ready _init_(); int main( int argc, char** args ){ process::start( argc, args ); _init_(); while( !process::empty() ) process::next(); return 0; } void _init_
 #else
-#define $Ready _init_(); void setup(){ nodepp _v_(); _init_(); } void loop(){} int _init_
+#define $Ready loop(){ process::next(); } void setup
 #endif
 
 /*────────────────────────────────────────────────────────────────────────────*/

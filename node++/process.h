@@ -1,15 +1,18 @@
 #ifndef NODEPP_PROCESS
 #define NODEPP_PROCESS
 
+#include "string.h"
+#include "array.h"
+
 #ifdef __WIN32
 #include <windows>
 #endif
 
-#include <cstdlib>
-#include <cstdio>
+#ifndef ARDUINO
+
+#include "signal.h"
 #include <chrono>
 #include <thread>
-#include <cmath>
 
 namespace ENV { 
 #ifdef __WIN32
@@ -48,7 +51,7 @@ namespace ENV_NODEPP {
 
     int clear(){ return ENV::CLEAR(); }
 
-    int init( string_t path ){ try { 
+    int init( string_t path ){ try {
             
         FILE* v = fopen( path.c_str(), "r" ); string_t s;
         array_t<string_t> env(2); bool nr = 0; bool pr = 0;
@@ -71,8 +74,6 @@ namespace ENV_NODEPP {
     };
 
 }
-
-/*────────────────────────────────────────────────────────────────────────────*/
 
 namespace process {
 
@@ -102,4 +103,15 @@ namespace process {
     void kill( int i=0 ){ exit(i); }
 
 }
+
+#else 
+
+namespace process {
+    void delay( uint time ){ ::delay( time ); }
+    uint now(){ return ::millis(); }
+    array_t<string_t> args;
+    int threads = 0;
+}
+
+#endif
 #endif

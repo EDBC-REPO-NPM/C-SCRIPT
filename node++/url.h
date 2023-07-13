@@ -2,6 +2,10 @@
 #define NODEPP_URL
 
 #include "algorithm.h"
+#include "regex.h"
+#include "map.h"
+
+using query_t = map_t< string_t, string_t >;
 
 array_t<string_t> prot = { "https", "http", "wss", "ws", "ftp" };
 array_t<int>      prts = { 443    , 80    , 443  , 80  , 21    };
@@ -24,9 +28,9 @@ struct url_t {
 
 namespace search_params {
 
-    query_t parse( string_t data ){ query_t null; 
-        if( data[0] != '?' ){ return null; } data.shift();
-        auto vec = regex::split( data, '&' ); for( auto i:vec ){
+    query_t parse( string_t data ){ query_t null;
+        if( data.empty() || data[0] != '?' ){ return null; }
+        data.shift(); auto vec = regex::split( data, '&' ); for( auto i:vec ){
             regex_t _a("^[^=]+"), _b("=.+"), _c("=");
             array_t<string_t> attr = { _a.match(i), _b.match(i) };  
             null[attr[0]] = _c.replace( attr[1], "" ); 
@@ -98,7 +102,7 @@ namespace url {
         string_t null; regex_t _a("/+[^/?#]+");
         if( !is_valid(URL) || !_a.test( URL ) ) 
           { return null; } auto vec = _a.match_all( URL );
-            vec.shift();  return vec.join( "" );
+            vec.shift();  return regex::join( vec, "" );
     }
 
     string_t host( string_t URL ){ string_t null; 
@@ -123,7 +127,7 @@ namespace url {
         if( _a.test( _host ) ){
             string_t _port = _a.match( _host );
                    _port = _b.replace_all(_port,"");
-                   return stoi( _port );
+                   return string::to_int( _port );
         } else {
             for( uint i=0; i<prot.size(); i++ ) {
                 regex_t _a(prot[i]); if( _a.test( _prot ) )

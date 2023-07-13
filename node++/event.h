@@ -1,58 +1,60 @@
 #ifndef NODEPP_EVENT
 #define NODEPP_EVENT
-
-#include <mutex>
+#include "queue.h"
  
 namespace EVENT_NODEPP {
-    uint HASH(  ) {
+
+    uint HASH() {
         int x = 32; uint data = 0; while( x --> 0 ){
             data = ( data | rand() % 2 ) << 1;
         }   return data;
     }
+
+    template< class... T >
+    struct ID {
+        uint             id;
+        function_t<T...> cb;
+    };
+
 }
 
 template< class... A > 
 class event_t { 
 
-    using ev_queue = umap_t<uint,function_t<void,A...>>;
-
     protected:
-    ptr_t<ev_queue>   every_queue;
-    ptr_t<ev_queue>   once_queue;
-    ptr_t<std::mutex> mut;
+    using ev = queue_t<EVENT_NODEPP::ID<void,A...>>;
+          ev   every_queue, once_queue;
 
     public:
-    void emit( A... args ){
-        std::lock_guard<std::mutex> lock(*mut);
-        for( auto x:*every_queue ) x.second(args...);
-        for( auto x:*once_queue )  x.second(args...);
-        if( !once_queue->empty() ) once_queue->clear();
+    void emit( A... args ) noexcept {
+        every_queue.map([&]( EVENT_NODEPP::ID<void,A...> arg ){ arg.cb(args...); });
+        once_queue.map([&]( EVENT_NODEPP::ID<void,A...> arg ){ arg.cb(args...); });
+        if( !once_queue.empty() ) once_queue.clear();
     }
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    uint on( function_t<void,A...> func ){
-        std::lock_guard<std::mutex> lock(*mut);
-        uint _hash = EVENT_NODEPP::HASH();
-        (*every_queue)[_hash] = func; return _hash;
+    void off( uint _hash ) noexcept {
+        uint index_A = every_queue.index_of([=]( EVENT_NODEPP::ID<void,A...> data ){ return data.id == _hash; });
+        uint index_B = once_queue.index_of([=]( EVENT_NODEPP::ID<void,A...> data ){ return data.id == _hash; });
+        every_queue.erase( every_queue.get( index_A ) ); once_queue.erase( once_queue.get( index_B ) );
     }
 
-    uint once( function_t<void,A...> func ){
-        std::lock_guard<std::mutex> lock(*mut);
+    uint on( function_t<void,A...> func ) noexcept {
         uint _hash = EVENT_NODEPP::HASH();
-        (*once_queue)[_hash] = func; 
+        every_queue.push({ _hash, func });
         return _hash;
     }
 
-    void off( uint _hash ){
-        std::lock_guard<std::mutex> lock(*mut);
-        every_queue->erase( _hash );
-        once_queue->erase( _hash );
+    uint once( function_t<void,A...> func ) noexcept {
+        uint _hash = EVENT_NODEPP::HASH();
+        once_queue.push({ _hash, func }); 
+        return _hash;
     }
     
     /*────────────────────────────────────────────────────────────────────────────*/
 
-    event_t() : every_queue(new ev_queue), once_queue(new ev_queue), mut(new std::mutex) {}
+    event_t(){  }
    ~event_t(){  }
 
 };

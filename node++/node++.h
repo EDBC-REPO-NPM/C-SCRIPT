@@ -3,33 +3,31 @@
 
 #include "algorithm.h"
 #include "process.h"
-#include "console.h"
-#include "worker.h"
-#include "event.h"
 #include "loop.h"
 
-class nodepp { public:
+namespace process {
 
-   ~nodepp(){
-
-        process::worker::add([=](){
-        while( process::poll::is_active() || process::loop::is_active() ){ 
-               process::poll::next(); process::delay(3);
-        }
-        });
-        
-        while( process::poll::is_active() || process::loop::is_active() || process::threads > 1 ){ 
-               process::loop::next(); process::delay(3);
-        }
-        
-    }
-   
-    nodepp( int argc, char** args ){ 
-        int i=1; while( i ++< argc ) process::args.push(args[i]);
+    void start( int argc, char** args ){
+        int i=1; while( i ++< argc ) 
+        process::args.push(args[i]);
+        #ifndef ARDUINO
+            process::signal();
+        #endif
     }
 
-    nodepp(){  }
+    void next(){
+        static bool b = 0; if( !b )
+             process::poll::next();
+        else process::loop::next(); b=!b; 
+        #ifndef ARDUINO
+            process::delay(3);
+        #endif
+    }
 
-};
+    bool empty(){
+        return ( process::poll::empty() && process::loop::empty() && process::threads<1 );
+    }
+
+}
 
 #endif

@@ -1,15 +1,17 @@
 #include "node++/node++.h"
 #include "node++/fetch.h"
+#include "node++/timer.h"
 
-int $Ready(){
+void $Ready(){
 
     fetch_t("http://ip-api.com/csv/",[]( auto cli ){
-        console::log("${0}",cli.headers["Host"]);
+        console::log( cli.headers["Host"] );
+
         cli.onData.on([]( string_t chunk ){
-            console::log(chunk);
+            console::log( chunk );
         });
+
         stream::pipe( cli );
     });
 
-    return 0;
 }

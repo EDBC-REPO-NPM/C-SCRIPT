@@ -1,12 +1,10 @@
 #include "node++/node++.h"
 #include "node++/timer.h"
 
-int i = 1;
+void $Ready() { ptr_t<int> i = new int(1);
 
-int $Ready() { 
-
-    int* t = timer::interval([&](){
-        console::log("han pasado ${0} segundos",i); i++;
+    auto t = timer::interval([=](){
+        console::log("time interval - ",*i," seconds"); (*i)++;
     },1000);
     
     timer::promise<int,int>([=]( auto res, auto rej ){
@@ -19,13 +17,10 @@ int $Ready() {
 
     },
     [=]( int res ){
-        console::log("resolved: ${0}",res);
-        timer::clear_interval(t);
+        console::log("resolved: ",res); timer::clear(t);
     },
     [=]( int rej ){
-        console::log("rejected: ${0}",rej);
-        timer::clear_interval(t);
+        console::log("rejected: ",rej); timer::clear(t);
     });
 
-    return 0; 
 }
